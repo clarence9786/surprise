@@ -45,7 +45,7 @@
             align-items: center;
             opacity: 1;
             transition: opacity 0.5s ease;
-            padding: 20px;
+            padding: 5vw;
             box-sizing: border-box;
             background-color: #0b0b0f;
         }
@@ -58,9 +58,9 @@
 
         /* --- INTRO SCENE STYLES --- */
         .title-text {
-            font-size: 32px;
+            font-size: clamp(24px, 8vw, 40px); /* Scales dynamically */
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 8vh;
             text-shadow: 3px 3px 0px #333;
             letter-spacing: 1px;
         }
@@ -69,12 +69,14 @@
             position: relative;
             animation: wobble 2s infinite ease-in-out;
             transition: transform 0.2s ease;
+            cursor: pointer;
         }
 
         .envelope-container:active { transform: scale(1.1); }
 
         .envelope-img {
-            width: 250px;
+            width: 60vw; /* Takes up 60% of the phone width */
+            max-width: 350px;
             height: auto;
             image-rendering: pixelated; 
         }
@@ -91,8 +93,8 @@
 
         @keyframes jumpFall {
             0%   { transform: translateY(0) scale(1) rotate(0deg); animation-timing-function: ease-out; }
-            40%  { transform: translateY(-80px) scale(1.1) rotate(-10deg); animation-timing-function: ease-in; }
-            100% { transform: translateY(800px) scale(0.9) rotate(25deg); opacity: 0; }
+            40%  { transform: translateY(-10vh) scale(1.1) rotate(-10deg); animation-timing-function: ease-in; }
+            100% { transform: translateY(80vh) scale(0.9) rotate(25deg); opacity: 0; }
         }
 
         .envelope-jump { animation: jumpFall 1.5s forwards !important; pointer-events: none; }
@@ -100,56 +102,62 @@
         /* --- CUTSCENE STYLES --- */
         .cutscene-bg { cursor: pointer; }
         .cutscene-text-container {
-            width: 90%; text-align: left; line-height: 1.6; font-size: 24px;
-            color: #55ff55; text-shadow: 0px 0px 5px rgba(85, 255, 85, 0.4); min-height: 150px; 
+            width: 90%; 
+            text-align: left; 
+            line-height: 1.6; 
+            font-size: clamp(18px, 6vw, 30px); /* Responsive font */
+            font-family: 'MinecraftFont', 'Courier New', Courier, monospace; /* Forced font */
+            color: #55ff55; 
+            text-shadow: 0px 0px 5px rgba(85, 255, 85, 0.4); 
+            min-height: 20vh; 
         }
-        
         .typewriter-cursor {
             animation: blink 1s step-end infinite; background-color: #55ff55;
-            display: inline-block; width: 14px; height: 24px; vertical-align: text-bottom; margin-left: 4px;
+            display: inline-block; width: 3vw; max-width: 14px; height: clamp(18px, 6vw, 30px); 
+            vertical-align: text-bottom; margin-left: 4px;
         }
         @keyframes blink { 50% { opacity: 0; } }
 
         .instruction-text {
-            font-size: 16px; color: #666; position: absolute; bottom: 40px;
+            font-size: clamp(14px, 4vw, 18px); color: #666; position: absolute; bottom: 5vh;
             opacity: 0; transition: opacity 0.5s ease; text-align: center;
         }
         .instruction-text.visible { opacity: 1; }
 
         /* --- QUIZ STYLES --- */
-        .quiz-container { width: 100%; max-width: 400px; display: none; flex-direction: column; align-items: center; }
+        .quiz-container { width: 100%; max-width: 450px; display: none; flex-direction: column; align-items: center; }
         .quiz-container.active { display: flex; animation: fadeIn 0.5s; }
-        .quiz-title { font-size: 20px; color: #55ff55; margin-bottom: 30px; text-align: center; }
+        .quiz-title { font-size: clamp(18px, 6vw, 28px); color: #55ff55; margin-bottom: 4vh; text-align: center; }
         
         /* Q1: Scroll Wheels */
-        .wheel-wrapper { position: relative; display: flex; gap: 20px; width: 100%; justify-content: center; height: 150px; margin-bottom: 30px;}
+        .wheel-wrapper { position: relative; display: flex; gap: 5vw; width: 100%; justify-content: center; height: 20vh; margin-bottom: 4vh;}
         .selection-bar {
-            position: absolute; top: 50px; left: 0; width: 100%; height: 50px;
+            position: absolute; top: 50%; left: 0; width: 100%; height: 6vh;
+            transform: translateY(-50%);
             border-top: 2px solid #55ff55; border-bottom: 2px solid #55ff55; pointer-events: none;
             background: rgba(85, 255, 85, 0.1);
         }
-        
         .scroll-column {
-            width: 120px; height: 150px; overflow-y: scroll; scroll-snap-type: y mandatory;
+            width: 30vw; max-width: 120px; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory;
             scrollbar-width: none; /* Firefox */
         }
         .scroll-column::-webkit-scrollbar { display: none; /* Safari/Chrome */ }
-        .scroll-item { height: 50px; display: flex; justify-content: center; align-items: center; scroll-snap-align: center; font-size: 20px; color: #aaa; }
-        .scroll-spacer { height: 50px; } /* Pads top and bottom so items can reach the center */
+        .scroll-item { height: 6vh; display: flex; justify-content: center; align-items: center; scroll-snap-align: center; font-size: clamp(18px, 6vw, 24px); color: #aaa; }
+        .scroll-spacer { height: 7vh; } /* Pads top and bottom so items can reach the center */
 
         /* Standard Buttons */
         .btn {
-            width: 100%; padding: 15px; margin-bottom: 15px; background: transparent; border: 2px solid #55ff55;
-            color: #55ff55; font-family: 'MinecraftFont', monospace; font-size: 16px; border-radius: 8px;
+            width: 100%; padding: 3vh 2vw; margin-bottom: 2vh; background: transparent; border: 2px solid #55ff55;
+            color: #55ff55; font-family: 'MinecraftFont', monospace; font-size: clamp(14px, 4.5vw, 20px); border-radius: 8px;
             transition: all 0.2s; cursor: pointer; text-align: center;
         }
         .btn:active { background: #55ff55; color: #000; }
 
         /* Q3: Image Grid */
-        .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-bottom: 20px; }
+        .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; width: 100%; margin-bottom: 3vh; }
         .grid-img-btn {
             width: 100%; aspect-ratio: 1/1; background-color: #222; border: 2px solid #55ff55; border-radius: 8px;
-            overflow: hidden; padding: 0;
+            overflow: hidden; padding: 0; cursor: pointer;
         }
         .grid-img-btn img { width: 100%; height: 100%; object-fit: cover; }
         .grid-img-btn:active { transform: scale(0.95); border-color: #fff; }
@@ -159,7 +167,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; justify-content: center; align-items: center; z-index: 100;
             background: rgba(0,0,0,0.9); opacity: 0; pointer-events: none; transition: opacity 0.2s;
-            font-size: 36px; text-shadow: 0 0 10px currentColor;
+            font-size: clamp(28px, 10vw, 48px); text-shadow: 0 0 10px currentColor;
         }
         #feedback-overlay.show { opacity: 1; pointer-events: auto; }
         
@@ -184,7 +192,7 @@
             display: block;
         }
 
-        /* --- PROOF (CAROUSEL) STYLES --- */
+        /* --- PROOF CAROUSEL STYLES --- */
         #scene-proof { padding: 0; }
         
         .carousel-container {
@@ -215,10 +223,11 @@
         
         .lock-icon {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 60px;
-            height: 60px;
+            bottom: 5vh;
+            right: 5vw;
+            width: 15vw;
+            max-width: 80px;
+            height: auto;
             cursor: pointer;
             animation: wiggle 5s infinite;
         }
@@ -237,14 +246,15 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 200;
+            padding: 5vw;
         }
         #countdown-modal.show { opacity: 1; pointer-events: auto; }
         
         .modal-content {
-            background: #111; border: 2px solid #55ff55; padding: 30px; border-radius: 12px;
-            text-align: center;
+            background: #111; border: 2px solid #55ff55; padding: 4vh 5vw; border-radius: 12px;
+            text-align: center; width: 100%; max-width: 400px;
         }
-        #timer-display { font-size: 32px; color: #55ff55; margin: 20px 0; }
+        #timer-display { font-size: clamp(24px, 8vw, 40px); color: #55ff55; margin: 3vh 0; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -333,11 +343,11 @@
             <div class="carousel-container">
                 <!-- Page 1 -->
                 <div class="carousel-slide">
-                    <img src="assets/what-do-i-like-part-1.png" alt="Proof 1" class="proof-img">
+                    <img src="assets/proof_1.png" alt="Proof 1" class="proof-img">
                 </div>
                 <!-- Page 2 -->
                 <div class="carousel-slide">
-                    <img src="assets/what-do-i-like-part-2.png" alt="Proof 2" class="proof-img">
+                    <img src="assets/proof_2.png" alt="Proof 2" class="proof-img">
                     <img src="assets/lock.png" alt="Lock" class="lock-icon" onclick="Countdown.open()">
                 </div>
             </div>
@@ -345,20 +355,12 @@
             <!-- Countdown Modal -->
             <div id="countdown-modal">
                 <div class="modal-content">
-                    <div style="font-size: 18px; color: #aaa;"></div>
-                    <div id="timer-display">-- -- -- --</div>
+                    <div style="font-size: clamp(14px, 5vw, 18px); color: #aaa;">Next Protocol Unlocks In:</div>
+                    <div id="timer-display">--d --h --m --s</div>
                     <button class="btn" onclick="Countdown.close()">Close</button>
                 </div>
             </div>
         </div>
-
-        <!-- SCENE 6: The Puzzle (Placeholder) -->
-        <div id="scene-puzzle" class="scene hidden">
-            <div class="title-text">PUZZLE COMING SOON</div>
-        </div>
-        
-        <!-- SCENE 7: Bye Bye (Placeholder) -->
-        <div id="scene-outro" class="scene hidden"></div>
 
     </div>
 
@@ -373,7 +375,7 @@
                     this.sounds.talking = new Audio('audio/talking.mp3');
                     this.sounds.talking.loop = true; 
                     this.sounds.failure = new Audio('audio/failure.wav');
-                    this.sounds.success = new Audio('audio/success.wav'); // Reuse menu_select for success buzz
+                    this.sounds.success = new Audio('audio/success.wav'); 
                     this.sounds.flashsong = new Audio('audio/flashsong.mp3');
                 } catch(e) {}
             },
@@ -413,8 +415,8 @@
             setupIntro: function() {
                 const envelopeBtn = document.getElementById('envelope-button');
                 
-                envelopeBtn.addEventListener('touchstart', (e) => {
-                    e.preventDefault(); 
+                // Changed from touchstart to click to ensure audio unlocks on all mobile browsers
+                envelopeBtn.addEventListener('click', () => {
                     envelopeBtn.style.pointerEvents = 'none'; 
                     AudioSystem.play('sparkle');
                     envelopeBtn.classList.add('envelope-jump'); 
@@ -453,7 +455,8 @@
                 
                 if (!this.tapListener) {
                     this.tapListener = this.handleInput.bind(this);
-                    document.getElementById('scene-cutscene').addEventListener('touchstart', this.tapListener);
+                    // Standard click event works perfectly for full-screen touch taps
+                    document.getElementById('scene-cutscene').addEventListener('click', this.tapListener);
                 }
                 
                 this.showNextText();
@@ -471,7 +474,6 @@
                 
                 AudioSystem.play('talking');
                 
-                // --- NEW: Parse custom colors and shadows ---
                 const currentData = this.texts[this.currentIndex];
                 const targetText = typeof currentData === 'string' ? currentData : currentData.text;
                 const targetColor = typeof currentData === 'string' ? '#55ff55' : (currentData.color || '#ffffff');
@@ -501,7 +503,6 @@
                 clearInterval(this.typeInterval);
                 AudioSystem.stop('talking'); 
                 
-                // --- NEW: Extract text properly for instant finish ---
                 const currentData = this.texts[this.currentIndex];
                 const targetText = typeof currentData === 'string' ? currentData : currentData.text;
                 document.getElementById('typewriter-text').textContent = targetText;
@@ -542,8 +543,9 @@
             // Reads which item is in the center of the scroll wheel
             getScrollValue: function(elementId) {
                 const el = document.getElementById(elementId);
-                // 50 is the height of .scroll-item
-                const index = Math.round(el.scrollTop / 50); 
+                // Dynamically calculate the item height based on the scroll element's styling (6vh)
+                const itemHeight = el.querySelector('.scroll-item').offsetHeight;
+                const index = Math.round(el.scrollTop / itemHeight); 
                 return index; 
             },
 
@@ -609,29 +611,25 @@
                     this.showFeedback(true, () => {
                         this.transitionQ('q3', null); // Hide quiz
                         
-                        // 1. Text Before Flashbang
                         Game.switchScene('scene-cutscene');
                         Cutscene.start([
                             "Identity verified.",
                             "Welcome, agent Irena.",
                             "Also known as..."
                         ], () => {
-                            
-                            // 2. The Flashbang & Song
                             Game.switchScene('scene-flashbang');
                             AudioSystem.play('flashsong');
                             
-                            // Lasts exactly 1 second
+                            // Flashbang lasts exactly 1 second
                             setTimeout(() => {
-                                AudioSystem.stop('flashsong'); // Cuts the song instantly
-                                
-                                // 3. Text After Flashbang
+                                AudioSystem.stop('flashsong');
                                 Game.switchScene('scene-cutscene');
+                                
                                 Cutscene.start([
-                                    "Facial login complete.",
-                                    "Welcome Irena.",
-                                    "Opening [love_letter.exe]",
-                                    "...",
+                                    "Visual match confirmed.",
+                                    "Welcome back.",
+                                    "It's good to see you.",
+                                    "Let's proceed.",
                                     { text: "Hi. :)", color: "#ffffff" },
                                     { text: "Hope you enjoyed that little minigame :P", color: "#ffffff" },
                                     { text: "How was your trip?", color: "#ffffff" },
@@ -642,7 +640,7 @@
                                 ], () => {
                                     Game.switchScene('scene-proof');
                                 });
-                            }, 1200); 
+                            }, 1200);
                         });
                     });
                 } else {
@@ -668,9 +666,7 @@
                 const now = new Date();
                 const nextMonday = new Date();
                 
-                // Formula to find days until next Monday (0 is Sunday, 1 is Monday)
                 let daysUntilMonday = (7 - now.getDay() + 1) % 7;
-                // If it's already Monday but past midnight, target the *next* Monday
                 if (daysUntilMonday === 0) daysUntilMonday = 7; 
                 
                 nextMonday.setDate(now.getDate() + daysUntilMonday);
@@ -682,7 +678,6 @@
 
                     if (distance < 0) {
                         display.textContent = "UNLOCKED";
-                        // Next week, you can change this to a button that links to the computer game!
                         return;
                     }
 
@@ -691,12 +686,11 @@
                     const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((distance % (1000 * 60)) / 1000);
 
-                    // Pad single digits with a zero (e.g. 05s instead of 5s)
                     const pad = (num) => num.toString().padStart(2, '0');
                     display.textContent = `${pad(d)}d ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
                 };
 
-                updateTimer(); // Initial call so it doesn't wait 1 second to show
+                updateTimer(); 
                 this.interval = setInterval(updateTimer, 1000);
             }
         };
