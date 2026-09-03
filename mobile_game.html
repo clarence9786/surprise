@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- CRITICAL FOR S24 ULTRA/MOBILE: Prevents zooming, handles notches, locks scale -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Incoming Message...</title>
+    
+    <style>
+        @font-face {
+            font-family: 'MinecraftFont';
+            src: url('assets/minecraft.ttf') format('truetype');
+            font-display: swap; 
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100dvh; 
+            background-color: #0b0b0f;
+            color: #fff;
+            font-family: 'MinecraftFont', 'Courier New', Courier, monospace;
+            overflow: hidden;
+            overscroll-behavior-y: contain; 
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            box-sizing: border-box;
+        }
+
+        .scene {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #0b0b0f;
+        }
+
+        .scene.hidden {
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* --- INTRO SCENE STYLES --- */
+        .title-text {
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 60px;
+            text-shadow: 3px 3px 0px #333;
+            letter-spacing: 1px;
+        }
+
+        .envelope-container {
+            position: relative;
+            animation: wobble 2s infinite ease-in-out;
+            transition: transform 0.2s ease;
+        }
+
+        .envelope-container:active { transform: scale(1.1); }
+
+        .envelope-img {
+            width: 250px;
+            height: auto;
+            image-rendering: pixelated; 
+        }
+
+        @keyframes wobble {
+            0%   { transform: rotate(0deg); }
+            5%   { transform: rotate(-8deg); }
+            10%  { transform: rotate(8deg); }
+            15%  { transform: rotate(-4deg); }
+            20%  { transform: rotate(4deg); }
+            25%  { transform: rotate(0deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        @keyframes jumpFall {
+            0%   { transform: translateY(0) scale(1) rotate(0deg); animation-timing-function: ease-out; }
+            40%  { transform: translateY(-80px) scale(1.1) rotate(-10deg); animation-timing-function: ease-in; }
+            100% { transform: translateY(800px) scale(0.9) rotate(25deg); opacity: 0; }
+        }
+
+        .envelope-jump { animation: jumpFall 1.5s forwards !important; pointer-events: none; }
+
+        /* --- CUTSCENE STYLES --- */
+        .cutscene-bg { cursor: pointer; }
+        .cutscene-text-container {
+            width: 90%; text-align: left; line-height: 1.6; font-size: 24px;
+            color: #55ff55; text-shadow: 0px 0px 5px rgba(85, 255, 85, 0.4); min-height: 150px; 
+        }
+        
+        .typewriter-cursor {
+            animation: blink 1s step-end infinite; background-color: #55ff55;
+            display: inline-block; width: 14px; height: 24px; vertical-align: text-bottom; margin-left: 4px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .instruction-text {
+            font-size: 16px; color: #666; position: absolute; bottom: 40px;
+            opacity: 0; transition: opacity 0.5s ease; text-align: center;
+        }
+        .instruction-text.visible { opacity: 1; }
+
+        /* --- QUIZ STYLES --- */
+        .quiz-container { width: 100%; max-width: 400px; display: none; flex-direction: column; align-items: center; }
+        .quiz-container.active { display: flex; animation: fadeIn 0.5s; }
+        .quiz-title { font-size: 20px; color: #55ff55; margin-bottom: 30px; text-align: center; }
+        
+        /* Q1: Scroll Wheels */
+        .wheel-wrapper { position: relative; display: flex; gap: 20px; width: 100%; justify-content: center; height: 150px; margin-bottom: 30px;}
+        .selection-bar {
+            position: absolute; top: 50px; left: 0; width: 100%; height: 50px;
+            border-top: 2px solid #55ff55; border-bottom: 2px solid #55ff55; pointer-events: none;
+            background: rgba(85, 255, 85, 0.1);
+        }
+        
+        .scroll-column {
+            width: 120px; height: 150px; overflow-y: scroll; scroll-snap-type: y mandatory;
+            scrollbar-width: none; /* Firefox */
+        }
+        .scroll-column::-webkit-scrollbar { display: none; /* Safari/Chrome */ }
+        .scroll-item { height: 50px; display: flex; justify-content: center; align-items: center; scroll-snap-align: center; font-size: 20px; color: #aaa; }
+        .scroll-spacer { height: 50px; } /* Pads top and bottom so items can reach the center */
+
+        /* Standard Buttons */
+        .btn {
+            width: 100%; padding: 15px; margin-bottom: 15px; background: transparent; border: 2px solid #55ff55;
+            color: #55ff55; font-family: 'MinecraftFont', monospace; font-size: 16px; border-radius: 8px;
+            transition: all 0.2s; cursor: pointer; text-align: center;
+        }
+        .btn:active { background: #55ff55; color: #000; }
+
+        /* Q3: Image Grid */
+        .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-bottom: 20px; }
+        .grid-img-btn {
+            width: 100%; aspect-ratio: 1/1; background-color: #222; border: 2px solid #55ff55; border-radius: 8px;
+            overflow: hidden; padding: 0;
+        }
+        .grid-img-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .grid-img-btn:active { transform: scale(0.95); border-color: #fff; }
+
+        /* Feedback Overlay */
+        #feedback-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center; z-index: 100;
+            background: rgba(0,0,0,0.9); opacity: 0; pointer-events: none; transition: opacity 0.2s;
+            font-size: 36px; text-shadow: 0 0 10px currentColor;
+        }
+        #feedback-overlay.show { opacity: 1; pointer-events: auto; }
+        
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* --- FLASHBANG STYLES --- */
+        #scene-flashbang { 
+            background-color: #000; 
+            transition: none !important; /* Removes the fade */
+            padding: 0; /* Removes the border padding so it goes edge-to-edge */
+        }
+        .flashbang-img { 
+            width: 100vw; 
+            height: 100dvh; 
+            object-fit: cover; /* Ensures it perfectly fills the phone screen */
+            display: block;
+        }
+
+        /* --- PROOF (CAROUSEL) STYLES --- */
+        #scene-proof { padding: 0; }
+        
+        .carousel-container {
+            width: 100vw;
+            height: 100dvh;
+            display: flex;
+            overflow-x: scroll;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none; /* Firefox */
+        }
+        .carousel-container::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
+        
+        .carousel-slide {
+            min-width: 100vw;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            scroll-snap-align: start;
+            position: relative;
+        }
+        
+        .proof-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .lock-icon {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            animation: wiggle 5s infinite;
+        }
+        
+        @keyframes wiggle {
+            0%, 90% { transform: rotate(0deg); }
+            92% { transform: rotate(-10deg); }
+            94% { transform: rotate(10deg); }
+            96% { transform: rotate(-10deg); }
+            98% { transform: rotate(10deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* Modal Styles */
+        #countdown-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 200;
+        }
+        #countdown-modal.show { opacity: 1; pointer-events: auto; }
+        
+        .modal-content {
+            background: #111; border: 2px solid #55ff55; padding: 30px; border-radius: 12px;
+            text-align: center;
+        }
+        #timer-display { font-size: 32px; color: #55ff55; margin: 20px 0; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        
+        <!-- SCENE 1: Interactive Intro -->
+        <div id="scene-intro" class="scene">
+            <div class="title-text">what could this be?</div>
+            <div class="envelope-container" id="envelope-button">
+                <img src="assets/envelope.png" alt="Envelope" class="envelope-img">
+            </div>
+        </div>
+
+        <!-- SCENE 2: Security Cutscene -->
+        <div id="scene-cutscene" class="scene cutscene-bg hidden">
+            <div id="cutscene-content" class="cutscene-text-container"></div>
+            <div id="cutscene-instruction" class="instruction-text">[Tap anywhere to continue]</div>
+        </div>
+
+        <!-- SCENE 3: The Quiz -->
+        <div id="scene-quiz" class="scene hidden">
+            
+            <!-- Question 1: Scroll Wheels -->
+            <div id="q1" class="quiz-container active">
+                <div class="quiz-title">When is our anniversary?</div>
+                <div class="wheel-wrapper">
+                    <div class="selection-bar"></div>
+                    
+                    <!-- Month Wheel -->
+                    <div class="scroll-column" id="wheel-month">
+                        <div class="scroll-spacer"></div>
+                        <div class="scroll-item">Jan</div><div class="scroll-item">Feb</div>
+                        <div class="scroll-item">Mar</div><div class="scroll-item">Apr</div>
+                        <div class="scroll-item">May</div><div class="scroll-item">Jun</div>
+                        <div class="scroll-item">Jul</div><div class="scroll-item">Aug</div>
+                        <div class="scroll-item">Sep</div><div class="scroll-item">Oct</div>
+                        <div class="scroll-item">Nov</div><div class="scroll-item">Dec</div>
+                        <div class="scroll-spacer"></div>
+                    </div>
+
+                    <!-- Day Wheel (Generated in JS) -->
+                    <div class="scroll-column" id="wheel-day">
+                        <!-- Populated by script -->
+                    </div>
+                </div>
+                <button class="btn" onclick="Quiz.checkQ1()">Verify Date</button>
+            </div>
+
+            <!-- Question 2: Text Options -->
+            <div id="q2" class="quiz-container">
+                <div class="quiz-title">Which of these movies is my least favourite?</div>
+                <!-- CHANGE THESE TEXTS -->
+                <button class="btn" onclick="Quiz.checkQ2(false)">Inception</button>
+                <button class="btn" onclick="Quiz.checkQ2(false)">Supergirl</button>
+                <button class="btn" onclick="Quiz.checkQ2(false)">The Minecraft Movie</button>
+                <button class="btn" onclick="Quiz.checkQ2(true)">Masters of the Universe</button>
+            </div>
+
+            <!-- Question 3: Image Options -->
+            <div id="q3" class="quiz-container">
+                <div class="quiz-title">Which of these games did I NOT play in my childhood?</div>
+                <div class="image-grid">
+                    <!-- CHANGE ASSET NAMES & TRUE/FALSE -->
+                    <button class="grid-img-btn" onclick="Quiz.checkQ3(false)"><img src="assets/game1.png" alt="Game 1"></button>
+                    <button class="grid-img-btn" onclick="Quiz.checkQ3(false)"><img src="assets/game2.png" alt="Game 2"></button>
+                    <button class="grid-img-btn" onclick="Quiz.checkQ3(true)"><img src="assets/game3.png" alt="Game 3"></button> <!-- Correct -->
+                    <button class="grid-img-btn" onclick="Quiz.checkQ3(false)"><img src="assets/game4.png" alt="Game 4"></button>
+                </div>
+            </div>
+            
+            <div id="feedback-overlay">VERIFIED</div>
+        </div>
+
+        <!-- SCENE 4: Flashbang -->
+        <div id="scene-flashbang" class="scene hidden">
+            <!-- Ensure you have a flashbang.png in assets -->
+            <img src="assets/flashbang.png" alt="Surprise!" class="flashbang-img">
+        </div>
+
+        <!-- SCENE 5: Proof Frame (Swipe Carousel) -->
+        <div id="scene-proof" class="scene hidden" style="padding: 0;">
+            <div class="carousel-container">
+                <!-- Page 1 -->
+                <div class="carousel-slide">
+                    <img src="assets/what-do-i-like-part-1.png" alt="Proof 1" class="proof-img">
+                </div>
+                <!-- Page 2 -->
+                <div class="carousel-slide">
+                    <img src="assets/what-do-i-like-part-2.png" alt="Proof 2" class="proof-img">
+                    <img src="assets/lock.png" alt="Lock" class="lock-icon" onclick="Countdown.open()">
+                </div>
+            </div>
+            
+            <!-- Countdown Modal -->
+            <div id="countdown-modal">
+                <div class="modal-content">
+                    <div style="font-size: 18px; color: #aaa;"></div>
+                    <div id="timer-display">-- -- -- --</div>
+                    <button class="btn" onclick="Countdown.close()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCENE 6: The Puzzle (Placeholder) -->
+        <div id="scene-puzzle" class="scene hidden">
+            <div class="title-text">PUZZLE COMING SOON</div>
+        </div>
+        
+        <!-- SCENE 7: Bye Bye (Placeholder) -->
+        <div id="scene-outro" class="scene hidden"></div>
+
+    </div>
+
+    <!-- AUDIO SYSTEM -->
+    <script>
+        const AudioSystem = {
+            sounds: {},
+            init: function() {
+                // Ensure audio exists in correct folders, using try/catch wrapper
+                try {
+                    this.sounds.sparkle = new Audio('audio/opening_sparkle.wav');
+                    this.sounds.talking = new Audio('audio/talking.mp3');
+                    this.sounds.talking.loop = true; 
+                    this.sounds.failure = new Audio('audio/failure.wav');
+                    this.sounds.success = new Audio('audio/success.wav'); // Reuse menu_select for success buzz
+                    this.sounds.flashsong = new Audio('audio/flashsong.mp3');
+                } catch(e) {}
+            },
+            play: function(id) {
+                if (this.sounds[id]) {
+                    if (id !== 'talking') this.sounds[id].currentTime = 0;
+                    this.sounds[id].play().catch(e => console.warn("Audio blocked:", e));
+                }
+            },
+            stop: function(id) {
+                if (this.sounds[id]) {
+                    this.sounds[id].pause();
+                    if (id !== 'talking') this.sounds[id].currentTime = 0;
+                }
+            }
+        };
+
+        const Game = {
+            currentScene: 'scene-intro',
+
+            init: function() {
+                AudioSystem.init();
+                this.setupIntro();
+                Quiz.init();
+            },
+            
+            switchScene: function(newSceneId) {
+                const currentEl = document.getElementById(this.currentScene);
+                const newEl = document.getElementById(newSceneId);
+
+                if (currentEl) currentEl.classList.add('hidden');
+                if (newEl) newEl.classList.remove('hidden');
+                
+                this.currentScene = newSceneId;
+            },
+
+            setupIntro: function() {
+                const envelopeBtn = document.getElementById('envelope-button');
+                
+                envelopeBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); 
+                    envelopeBtn.style.pointerEvents = 'none'; 
+                    AudioSystem.play('sparkle');
+                    envelopeBtn.classList.add('envelope-jump'); 
+                    
+                    setTimeout(() => {
+                        Game.switchScene('scene-cutscene'); 
+                        // Start First Cutscene
+                        Cutscene.start([
+                            "SYSTEM ALERT.",
+                            "Attemping to access [love_letter.exe]",
+                            "Highly sensitive, warm and lovely contents detected.",
+                            "Must verify user identity prior to proceeding."
+                        ], () => {
+                            Game.switchScene('scene-quiz');
+                        });
+                    }, 1500); 
+                });
+            }
+        };
+
+        const Cutscene = {
+            config: { speedMs: 40 },
+            texts: [],
+            onComplete: null,
+            currentIndex: 0,
+            currentChar: 0,
+            isTyping: false,
+            typeInterval: null,
+            tapListener: null,
+            
+            // Reusable start function
+            start: function(textArray, onCompleteCallback) {
+                this.texts = textArray;
+                this.onComplete = onCompleteCallback;
+                this.currentIndex = 0;
+                
+                if (!this.tapListener) {
+                    this.tapListener = this.handleInput.bind(this);
+                    document.getElementById('scene-cutscene').addEventListener('touchstart', this.tapListener);
+                }
+                
+                this.showNextText();
+            },
+            
+            showNextText: function() {
+                if (this.currentIndex >= this.texts.length) {
+                    this.end();
+                    return;
+                }
+                
+                document.getElementById('cutscene-instruction').classList.remove('visible');
+                this.isTyping = true;
+                this.currentChar = 0;
+                
+                AudioSystem.play('talking');
+                
+                // --- NEW: Parse custom colors and shadows ---
+                const currentData = this.texts[this.currentIndex];
+                const targetText = typeof currentData === 'string' ? currentData : currentData.text;
+                const targetColor = typeof currentData === 'string' ? '#55ff55' : (currentData.color || '#ffffff');
+                const targetShadow = typeof currentData === 'string' ? '0px 0px 5px rgba(85, 255, 85, 0.4)' : (currentData.shadow || '0px 0px 8px rgba(255, 255, 255, 0.4)');
+                
+                const contentDiv = document.getElementById('cutscene-content');
+                contentDiv.style.color = targetColor;
+                contentDiv.style.textShadow = targetShadow;
+                
+                // Apply cursor color dynamically too
+                contentDiv.innerHTML = `<span id="typewriter-text"></span><span class="typewriter-cursor" style="background-color: ${targetColor}"></span>`;
+                const textSpan = document.getElementById('typewriter-text');
+                
+                clearInterval(this.typeInterval);
+                
+                this.typeInterval = setInterval(() => {
+                    textSpan.textContent += targetText.charAt(this.currentChar);
+                    this.currentChar++;
+                    
+                    if (this.currentChar >= targetText.length) {
+                        this.finishTyping();
+                    }
+                }, this.config.speedMs);
+            },
+            
+            finishTyping: function() {
+                clearInterval(this.typeInterval);
+                AudioSystem.stop('talking'); 
+                
+                // --- NEW: Extract text properly for instant finish ---
+                const currentData = this.texts[this.currentIndex];
+                const targetText = typeof currentData === 'string' ? currentData : currentData.text;
+                document.getElementById('typewriter-text').textContent = targetText;
+                
+                this.isTyping = false;
+                
+                if (this.currentIndex === 0) {
+                    document.getElementById('cutscene-instruction').classList.add('visible'); 
+                }
+            },
+            
+            handleInput: function(e) {
+                e.preventDefault();
+                if (this.isTyping) {
+                    this.finishTyping();
+                } else {
+                    this.currentIndex++;
+                    this.showNextText(); 
+                }
+            },
+            
+            end: function() {
+                if (this.onComplete) this.onComplete();
+            }
+        };
+
+        const Quiz = {
+            init: function() {
+                // Populate Days Wheel (1-31)
+                const dayWheel = document.getElementById('wheel-day');
+                dayWheel.innerHTML = '<div class="scroll-spacer"></div>';
+                for(let i=1; i<=31; i++) {
+                    dayWheel.innerHTML += `<div class="scroll-item">${i}</div>`;
+                }
+                dayWheel.innerHTML += '<div class="scroll-spacer"></div>';
+            },
+
+            // Reads which item is in the center of the scroll wheel
+            getScrollValue: function(elementId) {
+                const el = document.getElementById(elementId);
+                // 50 is the height of .scroll-item
+                const index = Math.round(el.scrollTop / 50); 
+                return index; 
+            },
+
+            showFeedback: function(isCorrect, callback) {
+                const overlay = document.getElementById('feedback-overlay');
+                if(isCorrect) {
+                    overlay.textContent = "VERIFIED";
+                    overlay.style.color = "#55ff55";
+                    AudioSystem.play('success');
+                } else {
+                    overlay.textContent = "ACCESS DENIED";
+                    overlay.style.color = "#ff5555";
+                    AudioSystem.play('failure');
+                    
+                    // Shake the current quiz container
+                    const currentQ = document.querySelector('.quiz-container.active');
+                    currentQ.classList.remove('shake');
+                    void currentQ.offsetWidth; // trigger reflow
+                    currentQ.classList.add('shake');
+                }
+
+                overlay.classList.add('show');
+                setTimeout(() => {
+                    overlay.classList.remove('show');
+                    if(isCorrect && callback) setTimeout(callback, 300);
+                }, 1000);
+            },
+
+            transitionQ: function(hideId, showId) {
+                document.getElementById(hideId).classList.remove('active');
+                if(showId) {
+                    document.getElementById(showId).classList.add('active');
+                }
+            },
+
+            checkQ1: function() {
+                const monthIndex = this.getScrollValue('wheel-month'); // 0 = Jan, 1 = Feb, etc.
+                const dayIndex = this.getScrollValue('wheel-day');     // 0 = 1st, 1 = 2nd, etc.
+                
+                // === SET YOUR ANNIVERSARY HERE ===
+                // Example: August 14th 
+                // August is monthIndex 7. The 14th is dayIndex 13.
+                const targetMonth = 6; 
+                const targetDay = 2; 
+
+                if(monthIndex === targetMonth && dayIndex === targetDay) {
+                    this.showFeedback(true, () => this.transitionQ('q1', 'q2'));
+                } else {
+                    this.showFeedback(false);
+                }
+            },
+
+            checkQ2: function(isCorrect) {
+                if(isCorrect) {
+                    this.showFeedback(true, () => this.transitionQ('q2', 'q3'));
+                } else {
+                    this.showFeedback(false);
+                }
+            },
+
+            checkQ3: function(isCorrect) {
+                if(isCorrect) {
+                    this.showFeedback(true, () => {
+                        this.transitionQ('q3', null); // Hide quiz
+                        
+                        // 1. Text Before Flashbang
+                        Game.switchScene('scene-cutscene');
+                        Cutscene.start([
+                            "Identity verified.",
+                            "Welcome, agent Irena.",
+                            "Also known as..."
+                        ], () => {
+                            
+                            // 2. The Flashbang & Song
+                            Game.switchScene('scene-flashbang');
+                            AudioSystem.play('flashsong');
+                            
+                            // Lasts exactly 1 second
+                            setTimeout(() => {
+                                AudioSystem.stop('flashsong'); // Cuts the song instantly
+                                
+                                // 3. Text After Flashbang
+                                Game.switchScene('scene-cutscene');
+                                Cutscene.start([
+                                    "Facial login complete.",
+                                    "Welcome Irena.",
+                                    "Opening [love_letter.exe]",
+                                    "...",
+                                    { text: "Hi. :)", color: "#ffffff" },
+                                    { text: "Hope you enjoyed that little minigame :P", color: "#ffffff" },
+                                    { text: "How was your trip?", color: "#ffffff" },
+                                    { text: "I wanted to make something special for you.", color: "#ffffff" },
+                                    { text: "To help you remember that, even tho we're apart...", color: "#ffffff" },
+                                    { text: "I love you.", color: "#ffffff" },
+                                    { text: "Feel free to come back whenever you feel like it : D", color: "#ffffff" },
+                                ], () => {
+                                    Game.switchScene('scene-proof');
+                                });
+                            }, 1200); 
+                        });
+                    });
+                } else {
+                    this.showFeedback(false);
+                }
+            },
+        };
+
+        const Countdown = {
+            interval: null,
+            open: function() {
+                document.getElementById('countdown-modal').classList.add('show');
+                this.start();
+            },
+            close: function() {
+                document.getElementById('countdown-modal').classList.remove('show');
+                clearInterval(this.interval);
+            },
+            start: function() {
+                const display = document.getElementById('timer-display');
+                
+                // --- Automatically find the VERY NEXT Monday at 00:00:00 ---
+                const now = new Date();
+                const nextMonday = new Date();
+                
+                // Formula to find days until next Monday (0 is Sunday, 1 is Monday)
+                let daysUntilMonday = (7 - now.getDay() + 1) % 7;
+                // If it's already Monday but past midnight, target the *next* Monday
+                if (daysUntilMonday === 0) daysUntilMonday = 7; 
+                
+                nextMonday.setDate(now.getDate() + daysUntilMonday);
+                nextMonday.setHours(0, 0, 0, 0);
+
+                const updateTimer = () => {
+                    const currentTime = new Date().getTime();
+                    const distance = nextMonday.getTime() - currentTime;
+
+                    if (distance < 0) {
+                        display.textContent = "UNLOCKED";
+                        // Next week, you can change this to a button that links to the computer game!
+                        return;
+                    }
+
+                    const d = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    // Pad single digits with a zero (e.g. 05s instead of 5s)
+                    const pad = (num) => num.toString().padStart(2, '0');
+                    display.textContent = `${pad(d)}d ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+                };
+
+                updateTimer(); // Initial call so it doesn't wait 1 second to show
+                this.interval = setInterval(updateTimer, 1000);
+            }
+        };
+
+        window.onload = () => Game.init();
+    </script>
+</body>
+</html>
